@@ -1,0 +1,36 @@
+pipeline:
+  build:
+    image: quay.io/ukhomeofficedigital/drone-docker
+    repo: quay.io/aliyanaziz/cicdworkshop
+    secrets: [ docker_username, docker_password ]
+    registry: quay.io
+    tags:
+      - ${DRONE_COMMIT_SHA}
+      - latest
+    when:
+      event: push
+
+  build_tag:
+    image: ukhomeoffice/drone-docker
+    repo: quay.io/aliyanaziz/cicdworkshop
+    secrets: [ docker_username, docker_password ]
+    registry: quay.io
+    tags:
+      - ${DRONE_TAG}
+    when:
+      event: tag
+
+
+  deploy-to-kube:
+    image: quay.io/ukhomeofficedigital/kd:v1.10.6
+    secrets:
+      - kube_token_acp_notprod
+    environment:
+      - IMAGE_URL=quay.io/aliyanaziz/cicdworkshop:v0.6
+    commands:
+      - apk update
+      - apk add curl
+      - apk add bash
+      - bin/deploy.sh
+    when:
+      event: deployment
